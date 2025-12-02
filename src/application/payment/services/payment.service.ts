@@ -3,7 +3,7 @@ import { PaymentTypeOrmRepository } from '../../../infrastructure/persistence/pa
 import { CreatePaymentDto } from '../dto/create-payment.dto';
 import { UpdatePaymentDto } from '../dto/update-payment.dto';
 import { FilterPaymentDto } from '../dto/filter-payment.dto';
-import { PaymentStatus, PaymentMethod } from '../../../../domain/payment/payment.enums';
+import { PaymentStatus, PaymentMethod } from '../../../domain/payment/payment.enums';
 import { MercadoPagoService } from './mercadopago.service';
 
 @Injectable()

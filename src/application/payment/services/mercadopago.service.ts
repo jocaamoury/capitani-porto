@@ -16,7 +16,7 @@ export class MercadoPagoService {
         { title: payment.description, quantity: 1, currency_id: 'BRL', unit_price: Number(payment.amount) }
       ],
       external_reference: payment.id,
-      notification_url: 'http://localhost:3000/api/payment/mercadopago/webhook'
+      notification_url: 'https://ursine-jadon-alterably.ngrok-free.dev/api/payment/mercadopago/webhook'
     };
 
     const { data } = await this.api.post('/checkout/preferences', body);
