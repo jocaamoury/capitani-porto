@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  temporal-db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_DB: temporal
+    volumes:
+      - temporal_pgdata:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+
+  temporal:
+    image: temporalio/auto-setup:latest
+    environment:
+      - DB=postgres12
+      - POSTGRES_SEEDS=temporal-db
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - DB_PORT=5432
+    ports:
+      - "7233:7233"
+    depends_on:
+      - temporal-db
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+    ports:
+      - "8233:8080"
+    depends_on:
+      - temporal
+
+volumes:
+  temporal_pgdata:

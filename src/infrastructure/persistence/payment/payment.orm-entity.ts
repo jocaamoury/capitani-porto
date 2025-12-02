@@ -29,4 +29,8 @@ export class PaymentOrmEntity {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ nullable: true })
+  paymentUrl: string;
+
 }

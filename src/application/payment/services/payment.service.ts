@@ -5,6 +5,7 @@ import { UpdatePaymentDto } from '../dto/update-payment.dto';
 import { FilterPaymentDto } from '../dto/filter-payment.dto';
 import { PaymentStatus, PaymentMethod } from '../../../domain/payment/payment.enums';
 import { MercadoPagoService } from './mercadopago.service';
+import { Client, Connection } from '@temporalio/client';
 
 @Injectable()
 export class PaymentService {
@@ -19,15 +20,31 @@ export class PaymentService {
       status: PaymentStatus.PENDING
     } as any);
 
-    if(dto.paymentMethod === PaymentMethod.CREDIT_CARD){
-      const pref = await this.mp.createPreference(payment);
-      payment.mercadoPagoPreferenceId = pref.id;
-      await this.repo.create(payment as any);
-      return { ...payment, initPoint: pref.init_point };
-    }
+  if(dto.paymentMethod === PaymentMethod.CREDIT_CARD){
 
-    return payment;
+    // 🔥 Conexão com o Temporal
+    const connection = await Connection.connect();
+    const client = new Client({ connection });
+
+    // 🔥 Inicia o workflow do pagamento
+      await client.workflow.start('PaymentWorkflow', {
+        taskQueue: 'PAYMENT_QUEUE',
+        workflowId: `payment-${payment.id}`,
+        args: [{
+          paymentId: payment.id,
+          description: dto.description,
+          amount: dto.amount
+        }]
+      });
+    return { 
+      id: payment.id,
+      workflow: `payment-${payment.id}`,
+      message: "Workflow iniciado — preference será criada pelo Temporal"
+    };
   }
+
+  return payment;
+}
 
   async updatePayment(id: string, dto: UpdatePaymentDto){
     return await this.repo.updateStatus(id, dto.status);
