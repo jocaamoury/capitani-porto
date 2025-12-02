@@ -369,6 +369,9 @@ test/
 
 ## Resources
 
+
+Postman collection [Uploading Payments API - João.postman_collection.json…]()
+
 NestJS → https://docs.nestjs.com  
 Temporal → https://docs.temporal.io  
 Mercado Pago Dev → https://www.mercadopago.com.br/developers  
