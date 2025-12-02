@@ -1,1 +1,3 @@
-export * from './payment.workflow';
+import { PaymentWorkflow } from "./payment.workflow";
+
+export { PaymentWorkflow };

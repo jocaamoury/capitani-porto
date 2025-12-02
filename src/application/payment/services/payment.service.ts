@@ -36,7 +36,6 @@ async createPayment(dto: CreatePaymentDto) {
       }]
     });
 
-    // 🔥 Consulta imediata via QUERY (sem sleep)
     let url = '';
     while(!url) {
       url = await handle.query('getPreferenceUrl');
@@ -80,10 +79,8 @@ async createPayment(dto: CreatePaymentDto) {
         ? PaymentStatus.PAID
         : PaymentStatus.FAIL;
 
-    // 🔥 Atualiza o banco imediatamente
     await this.repo.updateStatus(internalId, status);
 
-    // 🔥 Envia o SIGNAL para o Workflow encerrar AGORA
     const connection = await Connection.connect();
     const client = new Client({ connection });
 

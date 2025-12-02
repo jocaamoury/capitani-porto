@@ -4,13 +4,17 @@ import {
   defineSignal,
   defineQuery,
   setHandler,
-  log
+  log,
+  condition
 } from '@temporalio/workflow';
 
 const { createPreference, getPaymentStatus, updatePaymentStatus } =
-  proxyActivities({ startToCloseTimeout: "1 minute" });
+  proxyActivities({
+    startToCloseTimeout: '1 minute',
+  });
 
 export const paymentStatusSignal = defineSignal<[string]>("paymentStatusSignal");
+
 export const getPreferenceUrlQuery = defineQuery<string | null>("getPreferenceUrl");
 
 export async function PaymentWorkflow(input: {
@@ -22,13 +26,11 @@ export async function PaymentWorkflow(input: {
   let finalStatus: string | null = null;
   let preferenceUrl: string | null = null;
 
-  // handler signal
   setHandler(paymentStatusSignal, (status) => {
-    log.info(`📩 Signal recebido: ${status}`);
+    log.info(`Signal received from webhook: ${status}`);
     finalStatus = status;
   });
 
-  // handler query
   setHandler(getPreferenceUrlQuery, () => preferenceUrl);
 
   await updatePaymentStatus(input.paymentId, "PENDING");
@@ -39,29 +41,34 @@ export async function PaymentWorkflow(input: {
     amount: input.amount,
   });
 
-  preferenceUrl = pref.init_point; // 👈 ESSENCIAL
+  preferenceUrl = pref.init_point;
 
-  log.info("🧾 Preference criada", {
+  log.info("Preference created", {
     paymentId: input.paymentId,
     preferenceId: pref.id,
     url: preferenceUrl,
   });
 
-  // loop
   while (true) {
+
     if (finalStatus) {
+      log.info(`Workflow completed via SIGNAL: ${finalStatus}`);
       await updatePaymentStatus(input.paymentId, finalStatus);
       return;
     }
 
-    await sleep(10_000);
+    await sleep(60_000);
 
     const status = await getPaymentStatus(input.paymentId);
+
     if (status === "approved") {
+      log.info("Finalized via POLLING = approved");
       await updatePaymentStatus(input.paymentId, "PAID");
       return;
     }
+
     if (status === "rejected" || status === "cancelled") {
+      log.info("Finalized via POLL = rejected/cancelled");
       await updatePaymentStatus(input.paymentId, "FAIL");
       return;
     }

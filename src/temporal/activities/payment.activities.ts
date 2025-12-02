@@ -18,12 +18,12 @@ export async function createPreference(payment: any) {
         unit_price: Number(payment.amount)
       }
     ],
-    external_reference: payment.id
+    external_reference: payment.id,
+    notification_url: process.env.MP_WEBHOOK_URL
   };
 
   const { data } = await api.post('/checkout/preferences', body);
 
-  // 🔥 SALVA A URL E O ID DA PREFERENCE NO BANCO
   const ds = new DataSource({
     type: 'postgres',
     host: process.env.DB_HOST,
@@ -40,7 +40,7 @@ export async function createPreference(payment: any) {
     .getRepository(PaymentOrmEntity)
     .update(payment.id, {
       mercadoPagoPreferenceId: data.id,
-      paymentUrl: data.init_point   // 👈 SALVA A URL AQUI
+      paymentUrl: data.init_point
     });
 
   await ds.destroy();
