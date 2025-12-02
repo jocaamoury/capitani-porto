@@ -370,7 +370,112 @@ test/
 ## Resources
 
 
-Postman collection [Uploading Payments API - João.postman_collection.json…]()
+Postman collection [Payments API - João.postman_collection.json](https://github.com/user-attachments/files/23877636/Payments.API.-.Joao.postman_collection.json)
+```yaml
+[Uploading Payments API - João.postman_collection.json…]()
+{
+	"info": {
+		"_postman_id": "c37133b1-74cc-480c-8a4d-2ff8c0736bdc",
+		"name": "Payments API - João",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "18995259",
+		"_collection_link": "https://jocamoury.postman.co/workspace/capitani~8d38d37e-c48f-4d5f-bd6b-a1a1ae98f6b8/collection/18995259-c37133b1-74cc-480c-8a4d-2ff8c0736bdc?action=share&source=collection_link&creator=18995259"
+	},
+	"item": [
+		{
+			"name": "Create Payment - PIX",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"cpf\": \"12345678901\",\n  \"description\": \"Pagamento PIX teste\",\n  \"amount\": 15,\n  \"paymentMethod\": \"PIX\"\n}"
+				},
+				"url": "http://localhost:3000/api/payment"
+			},
+			"response": []
+		},
+		{
+			"name": "Create Payment - CREDIT_CARD",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"cpf\": \"04123160212\",\n  \"description\": \"Pagamento cartao teste pedro\",\n  \"amount\": 15,\n  \"paymentMethod\": \"CREDIT_CARD\"\n}"
+				},
+				"url": "http://localhost:3000/api/payment"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Payment By ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/api/payment/:id",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"payment",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "062a2161-1cc9-482f-82de-a23462906db4"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List Payments",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:3000/api/payment"
+			},
+			"response": []
+		},
+		{
+			"name": "Webhook Mercado Pago (TEST)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"data\": {\n    \"id\": \"135489650297\"\n  }\n}"
+				},
+				"url": "https://ursine-jadon-alterably.ngrok-free.dev/api/payment/mercadopago/webhook"
+			},
+			"response": []
+		}
+	]
+}
+```
+
 
 NestJS → https://docs.nestjs.com  
 Temporal → https://docs.temporal.io  
