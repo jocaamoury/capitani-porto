@@ -1,0 +1,82 @@
+
+-------------------------------------------------------------------
+- Arquivo: src\infrastructure\persistence\payment\payment.orm-entity.ts
+-------------------------------------------------------------------
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { PaymentMethod, PaymentStatus } from '../../../domain/payment/payment.enums';
+
+@Entity('payments')
+export class PaymentOrmEntity {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column()
+  cpf: string;
+
+  @Column()
+  description: string;
+
+  @Column('numeric')
+  amount: number;
+
+  @Column({ type: 'varchar' })
+  paymentMethod: PaymentMethod;
+
+  @Column({ type: 'varchar' })
+  status: PaymentStatus;
+
+  @Column({ nullable: true })
+  mercadoPagoPreferenceId: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @Column({ nullable: true })
+  paymentUrl: string;
+
+}
+
+
+
+-------------------------------------------------------------------
+- Arquivo: src\infrastructure\persistence\payment\payment.typeorm-repository.ts
+-------------------------------------------------------------------
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { PaymentOrmEntity } from './payment.orm-entity';
+import { IPaymentRepository, PaymentFilter } from '../../../domain/payment/payment.repository';
+import { PaymentStatus } from '../../../domain/payment/payment.enums';
+import { Payment } from '../../../domain/payment/payment.entity';
+
+@Injectable()
+export class PaymentTypeOrmRepository implements IPaymentRepository {
+  constructor(@InjectRepository(PaymentOrmEntity) private readonly repo: Repository<PaymentOrmEntity>) {}
+
+  async create(payment: Payment): Promise<Payment> {
+    const entity = this.repo.create(payment as any);
+    const saved = await this.repo.save(entity);
+    return saved as any;
+  }
+
+  async updateStatus(id: string, status: PaymentStatus): Promise<Payment> {
+    await this.repo.update(id, { status });
+    return await this.repo.findOne({ where: { id } }) as any;
+  }
+
+  async findById(id: string): Promise<Payment | null> {
+    return await this.repo.findOne({ where: { id } }) as any;
+  }
+
+  async findAll(filter: PaymentFilter): Promise<Payment[]> {
+    const qb = this.repo.createQueryBuilder('p');
+    if (filter.cpf) qb.andWhere('p.cpf = :cpf', { cpf: filter.cpf });
+    if (filter.paymentMethod) qb.andWhere('p.paymentMethod = :pm', { pm: filter.paymentMethod });
+    return await qb.getMany() as any;
+  }
+}
+
+

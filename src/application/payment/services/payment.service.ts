@@ -6,6 +6,7 @@ import { FilterPaymentDto } from '../dto/filter-payment.dto';
 import { PaymentStatus, PaymentMethod } from '../../../domain/payment/payment.enums';
 import { MercadoPagoService } from './mercadopago.service';
 import { Client, Connection } from '@temporalio/client';
+import { paymentStatusSignal } from '../../../temporal/workflows/payment.workflow';
 
 @Injectable()
 export class PaymentService {
@@ -67,18 +68,27 @@ async createPayment(dto: CreatePaymentDto) {
     return await this.repo.findAll(filter);
   }
 
-  async handleMercadoPagoWebhook(query: any, body: any){
+  async handleMercadoPagoWebhook(query: any, body: any) {
     const paymentId = query['data.id'] || body.data?.id;
-    if(!paymentId) return;
+    if (!paymentId) return;
 
     const mpPayment = await this.mp.getPayment(paymentId);
     const internalId = mpPayment.external_reference;
-    if(!internalId) return;
+    if (!internalId) return;
 
     const status = mpPayment.status === 'approved'
         ? PaymentStatus.PAID
         : PaymentStatus.FAIL;
 
+    // 🔥 Atualiza o banco imediatamente
     await this.repo.updateStatus(internalId, status);
+
+    // 🔥 Envia o SIGNAL para o Workflow encerrar AGORA
+    const connection = await Connection.connect();
+    const client = new Client({ connection });
+
+    const handle = client.workflow.getHandle(`payment-${internalId}`);
+
+    await handle.signal("paymentStatusSignal", status);
   }
 }
