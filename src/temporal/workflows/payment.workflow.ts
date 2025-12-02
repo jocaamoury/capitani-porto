@@ -1,8 +1,11 @@
-import { proxyActivities, sleep } from '@temporalio/workflow';
+import { proxyActivities, sleep, defineQuery, setHandler } from '@temporalio/workflow';
 
 const { createPreference, getPaymentStatus, updatePaymentStatus } = proxyActivities({
   startToCloseTimeout: "1 minute"
 });
+
+// Query para retornar a URL da preference
+export const getPreferenceUrlQuery = defineQuery<string>('getPreferenceUrl');
 
 export async function PaymentWorkflow(input: {
   paymentId: string;
@@ -10,14 +13,24 @@ export async function PaymentWorkflow(input: {
   amount: number;
 }) {
 
+  let preferenceUrl = '';
+
+  // Handler da Query — API poderá consultar essa variável em tempo real
+  setHandler(getPreferenceUrlQuery, () => preferenceUrl);
+
   await updatePaymentStatus(input.paymentId, "PENDING");
 
-    const pref = await createPreference({
-      id: input.paymentId,
-      description: input.description,
-      amount: input.amount
-    });
+  // Chama activity (cria preference + salva no banco)
+  const pref = await createPreference({
+    id: input.paymentId,
+    description: input.description,
+    amount: input.amount
+  });
 
+  // Guarda no estado do workflow
+  preferenceUrl = pref.init_point;
+
+  // Continua monitorando pagamento
   while (true) {
     await sleep(10_000);
 

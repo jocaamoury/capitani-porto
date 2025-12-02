@@ -14,32 +14,39 @@ export class PaymentService {
     private readonly mp: MercadoPagoService
   ){}
 
-  async createPayment(dto: CreatePaymentDto){
-    const payment = await this.repo.create({
-      ...dto,
-      status: PaymentStatus.PENDING
-    } as any);
+async createPayment(dto: CreatePaymentDto) {
+  const payment = await this.repo.create({
+    ...dto,
+    status: PaymentStatus.PENDING
+  } as any);
 
-  if(dto.paymentMethod === PaymentMethod.CREDIT_CARD){
+  if(dto.paymentMethod === PaymentMethod.CREDIT_CARD) {
 
-    // 🔥 Conexão com o Temporal
     const connection = await Connection.connect();
     const client = new Client({ connection });
 
-    // 🔥 Inicia o workflow do pagamento
-      await client.workflow.start('PaymentWorkflow', {
-        taskQueue: 'PAYMENT_QUEUE',
-        workflowId: `payment-${payment.id}`,
-        args: [{
-          paymentId: payment.id,
-          description: dto.description,
-          amount: dto.amount
-        }]
-      });
-    return { 
+    const handle = await client.workflow.start('PaymentWorkflow', {
+      taskQueue: 'PAYMENT_QUEUE',
+      workflowId: `payment-${payment.id}`,
+      args: [{
+        paymentId: payment.id,
+        description: dto.description,
+        amount: dto.amount
+      }]
+    });
+
+    // 🔥 Consulta imediata via QUERY (sem sleep)
+    let url = '';
+    while(!url) {
+      url = await handle.query('getPreferenceUrl');
+      if (!url) await new Promise(r => setTimeout(r, 100));
+    }
+
+    return {
       id: payment.id,
-      workflow: `payment-${payment.id}`,
-      message: "Workflow iniciado — preference será criada pelo Temporal"
+      workflow: handle.workflowId,
+      paymentUrl: url,
+      message: "Preference criada"
     };
   }
 
